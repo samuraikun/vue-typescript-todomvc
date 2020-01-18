@@ -1,7 +1,7 @@
 <template lang="pug">
   .todoapp(v-cloak='')
     header.header
-      h1 todos
+      h1 Todos
       input.new-todo(autofocus='', autocomplete='off', placeholder='What needs to be done?', v-model='newTodo', @keyup.enter='addTodo')
     section.main(v-show='todos.length')
       input#toggle-all.toggle-all(type='checkbox', v-model='allDone')
@@ -28,115 +28,18 @@
         | Clear completed
 </template>
 
-<script>
-var filters = {
-  all: function(todos) {
-    return todos;
-  },
-  active: function(todos) {
-    return todos.filter(function(todo) {
-      return !todo.completed;
-    });
-  },
-  completed: function(todos) {
-    return todos.filter(function(todo) {
-      return todo.completed;
-    });
-  }
-};
+<script lang="ts">
+import { Component, Vue, Watch } from "vue-property-decorator";
 
-var STORAGE_KEY = "todos-vuejs";
-var todoStorage = {
-  fetch: function() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  },
-  save: function(todos) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-  }
-};
+interface TodoI {
+  id: number;
+  title: string;
+  completed: boolean;
+}
 
-export default {
-  name: "Home",
-  data() {
-    return {
-      todos: [],
-      newTodo: "",
-      editedTodo: null,
-      visibility: "all"
-    };
-  },
-  watch: {
-    todos: {
-      deep: true,
-      handler: todoStorage.save
-    }
-  },
-  computed: {
-    filteredTodos: function() {
-      return filters[this.visibility](this.todos);
-    },
-    remaining: function() {
-      return filters.active(this.todos).length;
-    },
-    allDone: {
-      get: function() {
-        return this.remaining === 0;
-      },
-      set: function(value) {
-        this.todos.forEach(function(todo) {
-          todo.completed = value;
-        });
-      }
-    }
-  },
-  methods: {
-    pluralize: function(word, count) {
-      return word + (count === 1 ? "" : "s");
-    },
+type Todos = Array<TodoI | null>;
 
-    addTodo: function() {
-      var value = this.newTodo && this.newTodo.trim();
-      if (!value) {
-        return;
-      }
-      this.todos.push({
-        id: this.todos.length + 1,
-        title: value,
-        completed: false
-      });
-      this.newTodo = "";
-    },
-
-    removeTodo: function(todo) {
-      var index = this.todos.indexOf(todo);
-      this.todos.splice(index, 1);
-    },
-
-    editTodo: function(todo) {
-      this.beforeEditCache = todo.title;
-      this.editedTodo = todo;
-    },
-
-    doneEdit: function(todo) {
-      if (!this.editedTodo) {
-        return;
-      }
-      this.editedTodo = null;
-      todo.title = todo.title.trim();
-      if (!todo.title) {
-        this.removeTodo(todo);
-      }
-    },
-
-    cancelEdit: function(todo) {
-      this.editedTodo = null;
-      todo.title = this.beforeEditCache;
-    },
-
-    removeCompleted: function() {
-      this.todos = filters.active(this.todos);
-    }
-  },
+@Component({
   directives: {
     "todo-focus": function(el, binding) {
       if (binding.value) {
@@ -144,7 +47,107 @@ export default {
       }
     }
   }
-};
+})
+export default class Home extends Vue {
+  STORAGE_KEY = "todos-vuejs";
+  todoStorage = {
+    fetch: () => {
+      return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || "[]");
+    },
+    save: (todos: Todos) => {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(todos));
+    }
+  };
+  todos: Todos = this.todoStorage.fetch();
+  newTodo = "";
+  editedTodo: TodoI | null = null;
+  visibility: "all" | "active" | "completed" = "all";
+  filters = {
+    all: (todos: Todos) => {
+      return todos;
+    },
+    active: (todos: Todos) => {
+      return todos.filter(function(todo) {
+        return !todo!.completed;
+      });
+    },
+    completed: (todos: Todos) => {
+      return todos.filter(function(todo) {
+        return todo!.completed;
+      });
+    }
+  };
+
+  @Watch("todos", { deep: true })
+  onTodosChanged() {
+    this.todoStorage.save(this.todos);
+  }
+
+  get filteredTodos() {
+    return this.filters[this.visibility](this.todos);
+  }
+
+  get remaining() {
+    return this.filters.active(this.todos).length;
+  }
+  get allDone() {
+    return {
+      get: () => {
+        return this.remaining === 0;
+      },
+      set: (value: boolean) => {
+        this.todos.forEach(function(todo) {
+          todo!.completed = value;
+        });
+      }
+    };
+  }
+
+  pluralize(word: string, count: number) {
+    return word + (count === 1 ? "" : "s");
+  }
+
+  addTodo() {
+    var value = this.newTodo && this.newTodo.trim();
+    if (!value) {
+      return;
+    }
+    this.todos.push({
+      id: this.todos.length + 1,
+      title: value,
+      completed: false
+    });
+    this.newTodo = "";
+  }
+
+  removeTodo(todo: TodoI) {
+    var index = this.todos.indexOf(todo);
+    this.todos.splice(index, 1);
+  }
+
+  editTodo(todo: TodoI) {
+    this.editedTodo = todo;
+  }
+
+  doneEdit(todo: TodoI) {
+    if (!this.editedTodo) {
+      return;
+    }
+    this.editedTodo = null;
+    todo.title = todo.title.trim();
+    if (!todo.title) {
+      this.removeTodo(todo);
+    }
+  }
+
+  cancelEdit(todo: TodoI) {
+    this.editedTodo = null;
+  }
+
+  removeCompleted() {
+    this.todos = this.filters.active(this.todos);
+  }
+}
 </script>
 
 <style lang="scss">
