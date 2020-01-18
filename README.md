@@ -1,4 +1,5 @@
 # vue-typescript-todomvc
+inspired by http://todomvc.com/
 
 ## Project setup
 ```
