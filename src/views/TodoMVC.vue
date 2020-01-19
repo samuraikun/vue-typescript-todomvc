@@ -29,6 +29,7 @@
 </template>
 
 <script lang="ts">
+import * as Vuex from "vuex";
 import { Component, Vue, Watch } from "vue-property-decorator";
 
 interface TodoI {
@@ -103,11 +104,17 @@ export default class Home extends Vue {
     };
   }
 
+  get storeCounterDouble() {
+    console.log(this.$store);
+    return this.$store.getters["counter/double"];
+  }
+
   pluralize(word: string, count: number) {
     return word + (count === 1 ? "" : "s");
   }
 
   addTodo() {
+    this.storeCounterDouble;
     var value = this.newTodo && this.newTodo.trim();
     if (!value) {
       return;

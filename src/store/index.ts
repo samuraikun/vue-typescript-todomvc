@@ -3,8 +3,8 @@ import Vuex from "vuex";
 
 Vue.use(Vuex);
 
-import Counter from "./counter";
+import counter from "./counter";
 
 export default new Vuex.Store({
-  modules: { Counter }
+  modules: { counter }
 });
