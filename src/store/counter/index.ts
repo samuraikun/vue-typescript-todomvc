@@ -1,4 +1,4 @@
-import { Getters, Mutations, Actions } from "./types";
+import { Getters, Mutations, Actions } from "../types";
 import {
   IState,
   IGetters,
@@ -6,7 +6,7 @@ import {
   IActions,
   IRootState,
   IRootGetters
-} from "./counterType";
+} from "./types";
 
 const state: IState = {
   count: 0
